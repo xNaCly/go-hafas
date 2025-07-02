@@ -9,9 +9,7 @@ import (
 
 func getStringFromEnvOrFailTest(t *testing.T, name string) string {
 	envVal := os.Getenv(name)
-	if envVal == "" {
-		t.Errorf("getStringFromEnvOrFailTest failed because %q is empty or undefined", name)
-	}
+	assert.NotEmpty(t, envVal)
 	return envVal
 }
 
