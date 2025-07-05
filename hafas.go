@@ -20,16 +20,16 @@ func debugStruct[S any](s S) {
 	fmt.Println(string(out))
 }
 
-type Location struct {
-	// Inner is the original Location result before processing resulted in the outer structure - this is an escape hatch
-	Inner vbbraw.LocationList_StopLocationOrCoordLocation_Item
-}
-
-func (c *Client) LocationsByName(name string, opt *vbbraw.Verb8Params) ([]Location, error) {
+// LocationsByName searches locations matching `nameOrAdress` by calling the location.name hafas endpoint
+//
+// - `nameOrAdress` is a convenience for setting opt.Input
+//
+// See hafas api docs 2.3
+func (c *Client) LocationsByName(nameOrAdress string, opt *vbbraw.Verb8Params) ([]vbbraw.LocationList_StopLocationOrCoordLocation_Item, error) {
 	if opt == nil {
 		opt = &vbbraw.Verb8Params{}
 	}
-	opt.Input = name
+	opt.Input = nameOrAdress
 	resp, err := c.ClientWithResponses.Verb8WithResponse(context.Background(), opt)
 	if err != nil {
 		return nil, errors.Join(errors.New("Failed to request LocationsByName"), err)
@@ -40,11 +40,40 @@ func (c *Client) LocationsByName(name string, opt *vbbraw.Verb8Params) ([]Locati
 		return nil, errors.Join(errors.New("Non 200 status code while requesting LocationsByName"), e)
 	}
 
-	source := resp.JSON200.StopLocationOrCoordLocation
-	locations := make([]Location, len(*source))
-	for i, raw := range *source {
-		locations[i] = Location{Inner: raw}
+	return *resp.JSON200.StopLocationOrCoordLocation, nil
+}
+
+// ArrivalBoard retrieves the next arrivals at a specified location starting from the given time.
+// By calling the `arrivalBoard` hafas endpoint
+//
+// - `locationId` specifies the ID of the stop or station for which arrivals are requested.
+//
+// - `date` sets the starting point in time for the arrival board query.
+//
+// - `opt` allows for further endpoint configuration, locationId and date are only conveniences for opt.Id, opt.Date and opt.Time
+//
+// See hafas api docs 2.26
+func (c *Client) ArrivalBoard(locationId string, date Time, opt *vbbraw.Verb1Params) ([]vbbraw.Arrival, error) {
+	if opt == nil {
+		opt = &vbbraw.Verb1Params{
+			Type: "ARR_STATION",
+		}
 	}
 
-	return locations, nil
+	opt.Id = &locationId
+	d, t := date.ToHafasDateAndTime()
+	opt.Date = &d
+	opt.Time = &t
+
+	resp, err := c.ClientWithResponses.Verb1WithResponse(context.Background(), opt)
+	if err != nil {
+		return nil, errors.Join(errors.New("Failed to request LocationsByName"), err)
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		e := errorFromBytes(resp.Body)
+		return nil, errors.Join(errors.New("Non 200 status code while requesting LocationsByName"), e)
+	}
+
+	return *resp.JSON200.Arrival, nil
 }
