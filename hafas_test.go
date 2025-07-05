@@ -47,3 +47,13 @@ func TestArrivalBoard(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, arrivals)
 }
+
+func TestDataInfo(t *testing.T) {
+	c, err := setup(t)
+	assert.NoError(t, err)
+	assert.NoError(t, c.Init())
+
+	data, err := c.DataInfo()
+	assert.NoError(t, err)
+	assert.NotEmpty(t, data)
+}

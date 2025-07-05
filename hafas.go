@@ -44,7 +44,6 @@ func (c *Client) LocationsByName(nameOrAdress string, opt *vbbraw.Verb8Params) (
 }
 
 // ArrivalBoard retrieves the next arrivals at a specified location starting from the given time.
-// By calling the `arrivalBoard` hafas endpoint
 //
 // - `locationId` specifies the ID of the stop or station for which arrivals are requested.
 //
@@ -67,13 +66,32 @@ func (c *Client) ArrivalBoard(locationId string, date Time, opt *vbbraw.Verb1Par
 
 	resp, err := c.ClientWithResponses.Verb1WithResponse(context.Background(), opt)
 	if err != nil {
-		return nil, errors.Join(errors.New("Failed to request LocationsByName"), err)
+		return nil, errors.Join(errors.New("Failed to request ArrivalBoard"), err)
 	}
 
 	if resp.StatusCode() != http.StatusOK {
 		e := errorFromBytes(resp.Body)
-		return nil, errors.Join(errors.New("Non 200 status code while requesting LocationsByName"), e)
+		return nil, errors.Join(errors.New("Non 200 status code while requesting ArrivalBoard"), e)
 	}
 
 	return *resp.JSON200.Arrival, nil
+}
+
+// DataInfo returns details contained about operators, administrations, products and product categories.
+//
+// See hafas api docs 2.45
+func (c *Client) DataInfo() (vbbraw.DataInfo, error) {
+	var empty vbbraw.DataInfo
+	opt := &vbbraw.Verb2Params{}
+	resp, err := c.ClientWithResponses.Verb2WithResponse(context.Background(), opt)
+	if err != nil {
+		return empty, errors.Join(errors.New("Failed to request DataInfo"), err)
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		e := errorFromBytes(resp.Body)
+		return empty, errors.Join(errors.New("Non 200 status code while requesting DataInfo"), e)
+	}
+
+	return *resp.JSON200, nil
 }
