@@ -29,7 +29,7 @@ func TestLocationsByName(t *testing.T) {
 	assert.NotEmpty(t, locations)
 }
 
-func TestArrivalBoard(t *testing.T) {
+func TestArrivals(t *testing.T) {
 	c, err := setup(t)
 	assert.NoError(t, err)
 	assert.NoError(t, c.Init())
@@ -43,9 +43,29 @@ func TestArrivalBoard(t *testing.T) {
 	locAsStop, err := loc.AsStopLocation()
 	assert.NoError(t, loc.Unwrap())
 
-	arrivals, err := c.ArrivalBoard(*&locAsStop.Id, TimeFrom(time.Now()), nil)
+	arrivals, err := c.Arrivals(*&locAsStop.Id, TimeFrom(time.Now()), nil)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, arrivals)
+}
+
+func TestDepartures(t *testing.T) {
+	c, err := setup(t)
+	assert.NoError(t, err)
+	assert.NoError(t, c.Init())
+
+	locations, err := c.LocationsByName("U Alexanderplatz", nil)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, locations)
+
+	loc := locations[0]
+	assert.NoError(t, loc.Unwrap())
+	locAsStop, err := loc.AsStopLocation()
+	assert.NoError(t, loc.Unwrap())
+
+	departure, err := c.Departures(*&locAsStop.Id, TimeFrom(time.Now()), nil)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, departure)
+	debugStruct(departure[0])
 }
 
 func TestDataInfo(t *testing.T) {

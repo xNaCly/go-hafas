@@ -43,16 +43,16 @@ func (c *Client) LocationsByName(nameOrAdress string, opt *vbbraw.Verb8Params) (
 	return *resp.JSON200.StopLocationOrCoordLocation, nil
 }
 
-// ArrivalBoard retrieves the next arrivals at a specified location starting from the given time.
+// Arrivals retrieves the next arrivals at a specified location starting from the given time.
 //
-// - `locationId` specifies the ID of the stop or station for which arrivals are requested.
+// - `locationId` specifies the ID of the stop or station
 //
 // - `date` sets the starting point in time for the arrival board query.
 //
 // - `opt` allows for further endpoint configuration, locationId and date are only conveniences for opt.Id, opt.Date and opt.Time
 //
 // See hafas api docs 2.26
-func (c *Client) ArrivalBoard(locationId string, date Time, opt *vbbraw.Verb1Params) ([]vbbraw.Arrival, error) {
+func (c *Client) Arrivals(locationId string, date Time, opt *vbbraw.Verb1Params) ([]vbbraw.Arrival, error) {
 	if opt == nil {
 		opt = &vbbraw.Verb1Params{
 			Type: "ARR_STATION",
@@ -75,6 +75,40 @@ func (c *Client) ArrivalBoard(locationId string, date Time, opt *vbbraw.Verb1Par
 	}
 
 	return *resp.JSON200.Arrival, nil
+}
+
+// Departures retrieves the next departures at a specified location starting from the given time.
+//
+// - `locationId` specifies the ID of the stop or station
+//
+// - `date` sets the starting point in time for the arrival board query.
+//
+// - `opt` allows for further endpoint configuration, locationId and date are only conveniences for opt.Id, opt.Date and opt.Time
+//
+// See hafas api docs 2.26
+func (c *Client) Departures(locationId string, date Time, opt *vbbraw.Verb3Params) ([]vbbraw.Departure, error) {
+	if opt == nil {
+		opt = &vbbraw.Verb3Params{
+			Type: "DEP",
+		}
+	}
+
+	opt.Id = &locationId
+	d, t := date.ToHafasDateAndTime()
+	opt.Date = &d
+	opt.Time = &t
+
+	resp, err := c.ClientWithResponses.Verb3WithResponse(context.Background(), opt)
+	if err != nil {
+		return nil, errors.Join(errors.New("Failed to request ArrivalBoard"), err)
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		e := errorFromBytes(resp.Body)
+		return nil, errors.Join(errors.New("Non 200 status code while requesting ArrivalBoard"), e)
+	}
+
+	return *resp.JSON200.Departure, nil
 }
 
 // DataInfo returns details contained about operators, administrations, products and product categories.
