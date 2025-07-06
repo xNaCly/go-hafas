@@ -94,3 +94,31 @@ func TestDataInfo(t *testing.T) {
 	data, err := c.DataInfo()
 	assert.NotEmpty(t, data)
 }
+
+func TestTrip(t *testing.T) {
+	c, err := setup(t)
+	assert.NoError(t, err)
+	assert.NoError(t, c.Init())
+
+	locations, err := c.LocationsByName("U Alexanderplatz", nil)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, locations)
+	assert.NoError(t, locations[0].Unwrap())
+	start, err := locations[0].AsStopLocation()
+	assert.NoError(t, err)
+
+	locations, err = c.LocationsByName("U Jannowitzbrücke", nil)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, locations)
+	assert.NoError(t, locations[0].Unwrap())
+	end, err := locations[0].AsStopLocation()
+	assert.NoError(t, err)
+
+	params := &vbbraw.Verb11Params{
+		OriginId: &start.Id,
+		DestId:   &end.Id,
+	}
+	departure, err := c.TripSearch(TimeFrom(time.Now()), params)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, departure)
+}

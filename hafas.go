@@ -155,3 +155,28 @@ func (c *Client) DataInfo() (vbbraw.DataInfo, error) {
 
 	return *resp.JSON200, nil
 }
+
+// TripSearch computes a trip from opt.OriginId (or opt.originCoord(Lat|Long)) to opt.DestId (or opt.destCoord(Lat|Long))
+//
+// See hafas api docs 2.12
+func (c *Client) TripSearch(time Time, opt *vbbraw.Verb11Params) ([]vbbraw.TripType, error) {
+	if opt == nil {
+		opt = &vbbraw.Verb11Params{}
+	}
+
+	d, t := time.ToHafasDateAndTime()
+	opt.Date = &d
+	opt.Time = &t
+
+	resp, err := c.ClientWithResponses.Verb11WithResponse(context.Background(), opt)
+	if err != nil {
+		return nil, errors.Join(errors.New("Failed to request Trip"), err)
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		e := errorFromBytes(resp.Body)
+		return nil, errors.Join(errors.New("Non 200 status code while requesting Trip"), e)
+	}
+
+	return *resp.JSON200.Trip, nil
+}

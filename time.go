@@ -1,18 +1,18 @@
 package gohafas
 
-import gotime "time"
+import "time"
 
 // Time wraps time.Time for some Hafas specific time and date interactions
 type Time struct {
-	inner gotime.Time
+	inner time.Time
 }
 
-func TimeFrom(t gotime.Time) Time {
+func TimeFrom(t time.Time) Time {
 	return Time{t}
 }
 
-func (t *Time) ToHafasDateAndTime() (date string, time string) {
-	date = t.inner.Format(gotime.DateOnly)
-	time = t.inner.Format(gotime.TimeOnly)
+func (t *Time) ToHafasDateAndTime() (dateStr string, timeStr string) {
+	dateStr = t.inner.Format(time.DateOnly)
+	timeStr = t.inner.Format(time.TimeOnly)
 	return
 }
