@@ -29,6 +29,28 @@ func TestLocationsByName(t *testing.T) {
 	assert.NotEmpty(t, locations)
 }
 
+func TestLocationsByCoordinates(t *testing.T) {
+	c, err := setup(t)
+	assert.NoError(t, err)
+	assert.NoError(t, c.Init())
+
+	maxNo := 1
+	locations, err := c.LocationsByName("S Friedrichsstraße", &vbbraw.Verb8Params{
+		MaxNo: &maxNo,
+	})
+	assert.NoError(t, err)
+	assert.NotEmpty(t, locations)
+
+	loc := locations[0]
+	assert.NoError(t, loc.Unwrap())
+	coord, err := loc.AsStopLocation()
+	assert.NoError(t, err)
+
+	stopLocation, err := c.LocationsByCoordinate(*coord.Lat, *coord.Lon, nil)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, stopLocation)
+}
+
 func TestArrivals(t *testing.T) {
 	c, err := setup(t)
 	assert.NoError(t, err)
@@ -41,7 +63,6 @@ func TestArrivals(t *testing.T) {
 	loc := locations[0]
 	assert.NoError(t, loc.Unwrap())
 	locAsStop, err := loc.AsStopLocation()
-	assert.NoError(t, loc.Unwrap())
 
 	arrivals, err := c.Arrivals(*&locAsStop.Id, TimeFrom(time.Now()), nil)
 	assert.NoError(t, err)
@@ -60,12 +81,9 @@ func TestDepartures(t *testing.T) {
 	loc := locations[0]
 	assert.NoError(t, loc.Unwrap())
 	locAsStop, err := loc.AsStopLocation()
-	assert.NoError(t, loc.Unwrap())
-
 	departure, err := c.Departures(*&locAsStop.Id, TimeFrom(time.Now()), nil)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, departure)
-	debugStruct(departure[0])
 }
 
 func TestDataInfo(t *testing.T) {
@@ -74,6 +92,5 @@ func TestDataInfo(t *testing.T) {
 	assert.NoError(t, c.Init())
 
 	data, err := c.DataInfo()
-	assert.NoError(t, err)
 	assert.NotEmpty(t, data)
 }

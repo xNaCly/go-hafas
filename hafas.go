@@ -22,8 +22,6 @@ func debugStruct[S any](s S) {
 
 // LocationsByName searches locations matching `nameOrAdress` by calling the location.name hafas endpoint
 //
-// - `nameOrAdress` is a convenience for setting opt.Input
-//
 // See hafas api docs 2.3
 func (c *Client) LocationsByName(nameOrAdress string, opt *vbbraw.Verb8Params) ([]vbbraw.LocationList_StopLocationOrCoordLocation_Item, error) {
 	if opt == nil {
@@ -43,13 +41,47 @@ func (c *Client) LocationsByName(nameOrAdress string, opt *vbbraw.Verb8Params) (
 	return *resp.JSON200.StopLocationOrCoordLocation, nil
 }
 
+// LocationsBy searches locations matching `x` and `y` by calling the location.nearbystops hafas endpoint
+//
+// See hafas api docs 2.3
+func (c *Client) LocationsByCoordinate(originCoordLat, originCoordLong float32, opt *vbbraw.Verb9Params) ([]vbbraw.StopLocation, error) {
+	if opt == nil {
+		opt = &vbbraw.Verb9Params{}
+	}
+	opt.OriginCoordLat = originCoordLat
+	opt.OriginCoordLong = originCoordLong
+	resp, err := c.ClientWithResponses.Verb9WithResponse(context.Background(), opt)
+	if err != nil {
+		return nil, errors.Join(errors.New("Failed to request LocationsByCoordinate"), err)
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		e := errorFromBytes(resp.Body)
+		return nil, errors.Join(errors.New("Non 200 status code while requesting LocationsByCoordinate"), e)
+	}
+
+	// we cast all of these to StopLocation, since we know LocationsByCoordinate only returns StopLocation
+	locationList := *resp.JSON200.StopLocationOrCoordLocation
+
+	stopList := make([]vbbraw.StopLocation, len(locationList))
+	for i, l := range locationList {
+		err := l.Unwrap()
+		if err != nil {
+			return nil, errors.Join(errors.New("Failed to unwrap LocationList_StopLocationOrCoordLocation_Item"), err)
+		}
+
+		stopLocation, err := l.AsStopLocation()
+		if err != nil {
+			return nil, errors.Join(errors.New("Failed to convert LocationList_StopLocationOrCoordLocation_Item to a StopLocation"), err)
+		}
+
+		stopList[i] = stopLocation
+	}
+
+	return stopList, nil
+}
+
 // Arrivals retrieves the next arrivals at a specified location starting from the given time.
-//
-// - `locationId` specifies the ID of the stop or station
-//
-// - `date` sets the starting point in time for the arrival board query.
-//
-// - `opt` allows for further endpoint configuration, locationId and date are only conveniences for opt.Id, opt.Date and opt.Time
 //
 // See hafas api docs 2.26
 func (c *Client) Arrivals(locationId string, date Time, opt *vbbraw.Verb1Params) ([]vbbraw.Arrival, error) {
@@ -66,24 +98,18 @@ func (c *Client) Arrivals(locationId string, date Time, opt *vbbraw.Verb1Params)
 
 	resp, err := c.ClientWithResponses.Verb1WithResponse(context.Background(), opt)
 	if err != nil {
-		return nil, errors.Join(errors.New("Failed to request ArrivalBoard"), err)
+		return nil, errors.Join(errors.New("Failed to request Arrivals"), err)
 	}
 
 	if resp.StatusCode() != http.StatusOK {
 		e := errorFromBytes(resp.Body)
-		return nil, errors.Join(errors.New("Non 200 status code while requesting ArrivalBoard"), e)
+		return nil, errors.Join(errors.New("Non 200 status code while requesting Arrivals"), e)
 	}
 
 	return *resp.JSON200.Arrival, nil
 }
 
 // Departures retrieves the next departures at a specified location starting from the given time.
-//
-// - `locationId` specifies the ID of the stop or station
-//
-// - `date` sets the starting point in time for the arrival board query.
-//
-// - `opt` allows for further endpoint configuration, locationId and date are only conveniences for opt.Id, opt.Date and opt.Time
 //
 // See hafas api docs 2.26
 func (c *Client) Departures(locationId string, date Time, opt *vbbraw.Verb3Params) ([]vbbraw.Departure, error) {
@@ -100,12 +126,12 @@ func (c *Client) Departures(locationId string, date Time, opt *vbbraw.Verb3Param
 
 	resp, err := c.ClientWithResponses.Verb3WithResponse(context.Background(), opt)
 	if err != nil {
-		return nil, errors.Join(errors.New("Failed to request ArrivalBoard"), err)
+		return nil, errors.Join(errors.New("Failed to request Departures"), err)
 	}
 
 	if resp.StatusCode() != http.StatusOK {
 		e := errorFromBytes(resp.Body)
-		return nil, errors.Join(errors.New("Non 200 status code while requesting ArrivalBoard"), e)
+		return nil, errors.Join(errors.New("Non 200 status code while requesting Departures"), e)
 	}
 
 	return *resp.JSON200.Departure, nil
