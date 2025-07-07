@@ -1,4 +1,5 @@
-package gohafas
+// language has the single usecase of being a namespace for the Language type and its enum values
+package language
 
 // Language represents a language available in the HAFAS API
 //

@@ -7,17 +7,18 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/xNaCly/go-hafas/language"
 	"github.com/xNaCly/go-hafas/vbbraw"
 )
 
-// Client holds the Baseurl of the hafas remote, the Authentication token and
-// the internal vbbraw.ClientWithResponses for raw hafas usage by the consumer
+// Client holds all necessary state and configuration for making hafas api interaction work
 type Client struct {
 	Baseurl             string
-	Authorization       string   // Every client using the API needs to pass a valid authentication key in every request. - 1.2.13 Authentication from HAFAS.api.pdf
-	Language            Language // Language represents a language available in the HAFAS API
-	ClientWithResponses *vbbraw.ClientWithResponses
-	HttpClient          vbbraw.HttpRequestDoer
+	Authorization       string                      // Every client using the API needs to pass a valid authentication key in every request. See 1.2.13 hafas docs
+	Language            language.Language           // Language represents a language available in the HAFAS API
+	ClientWithResponses *vbbraw.ClientWithResponses // Escape hatch, so the user of this api can make requests on their own
+	HttpClient          vbbraw.HttpRequestDoer      // used by all methods to make HTTP requests
+	Context             context.Context             // all methods pass this ctx to all HTTP requests
 }
 
 // ClientOption defines a function that configures the Client.
@@ -33,8 +34,9 @@ func NewClient(baseurl, authorization string, opts ...ClientOption) (*Client, er
 	c := &Client{
 		Baseurl:       baseurl,
 		Authorization: authorization,
-		Language:      EN,
+		Language:      language.EN,
 		HttpClient:    &http.Client{},
+		Context:       context.Background(),
 	}
 
 	for _, o := range opts {
@@ -45,7 +47,7 @@ func NewClient(baseurl, authorization string, opts ...ClientOption) (*Client, er
 }
 
 // WithLanguage sets (*Client).Language = lang
-func WithLanguage(lang Language) ClientOption {
+func WithLanguage(lang language.Language) ClientOption {
 	return func(c *Client) {
 		c.Language = lang
 	}
@@ -55,6 +57,13 @@ func WithLanguage(lang Language) ClientOption {
 func WithHttpClient(client vbbraw.HttpRequestDoer) ClientOption {
 	return func(c *Client) {
 		c.HttpClient = client
+	}
+}
+
+// WithContext sets (*Client).Context = context
+func WithContext(context context.Context) ClientOption {
+	return func(c *Client) {
+		c.Context = context
 	}
 }
 
@@ -84,7 +93,7 @@ func (c *Client) Init() (err error) {
 
 // Ping attempts to ping the remote and returns an error if said ping fails
 func (c *Client) Ping() error {
-	req, err := http.NewRequest(http.MethodGet, c.Baseurl+"/", nil)
+	req, err := http.NewRequestWithContext(c.Context, http.MethodGet, c.Baseurl+"/", nil)
 	if err != nil {
 		return errors.Join(errors.New("Failed to create the ping request"), err)
 	}

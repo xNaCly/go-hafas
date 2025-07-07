@@ -3,7 +3,6 @@
 package gohafas
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -28,7 +27,7 @@ func (c *Client) LocationsByName(nameOrAdress string, opt *vbbraw.Verb8Params) (
 		opt = &vbbraw.Verb8Params{}
 	}
 	opt.Input = nameOrAdress
-	resp, err := c.ClientWithResponses.Verb8WithResponse(context.Background(), opt)
+	resp, err := c.ClientWithResponses.Verb8WithResponse(c.Context, opt)
 	if err != nil {
 		return nil, errors.Join(errors.New("Failed to request LocationsByName"), err)
 	}
@@ -50,7 +49,7 @@ func (c *Client) LocationsByCoordinate(originCoordLat, originCoordLong float32, 
 	}
 	opt.OriginCoordLat = originCoordLat
 	opt.OriginCoordLong = originCoordLong
-	resp, err := c.ClientWithResponses.Verb9WithResponse(context.Background(), opt)
+	resp, err := c.ClientWithResponses.Verb9WithResponse(c.Context, opt)
 	if err != nil {
 		return nil, errors.Join(errors.New("Failed to request LocationsByCoordinate"), err)
 	}
@@ -96,7 +95,7 @@ func (c *Client) Arrivals(locationId string, date Time, opt *vbbraw.Verb1Params)
 	opt.Date = &d
 	opt.Time = &t
 
-	resp, err := c.ClientWithResponses.Verb1WithResponse(context.Background(), opt)
+	resp, err := c.ClientWithResponses.Verb1WithResponse(c.Context, opt)
 	if err != nil {
 		return nil, errors.Join(errors.New("Failed to request Arrivals"), err)
 	}
@@ -124,7 +123,7 @@ func (c *Client) Departures(locationId string, date Time, opt *vbbraw.Verb3Param
 	opt.Date = &d
 	opt.Time = &t
 
-	resp, err := c.ClientWithResponses.Verb3WithResponse(context.Background(), opt)
+	resp, err := c.ClientWithResponses.Verb3WithResponse(c.Context, opt)
 	if err != nil {
 		return nil, errors.Join(errors.New("Failed to request Departures"), err)
 	}
@@ -143,7 +142,7 @@ func (c *Client) Departures(locationId string, date Time, opt *vbbraw.Verb3Param
 func (c *Client) DataInfo() (vbbraw.DataInfo, error) {
 	var empty vbbraw.DataInfo
 	opt := &vbbraw.Verb2Params{}
-	resp, err := c.ClientWithResponses.Verb2WithResponse(context.Background(), opt)
+	resp, err := c.ClientWithResponses.Verb2WithResponse(c.Context, opt)
 	if err != nil {
 		return empty, errors.Join(errors.New("Failed to request DataInfo"), err)
 	}
@@ -168,7 +167,7 @@ func (c *Client) TripSearch(time Time, opt *vbbraw.Verb11Params) ([]vbbraw.TripT
 	opt.Date = &d
 	opt.Time = &t
 
-	resp, err := c.ClientWithResponses.Verb11WithResponse(context.Background(), opt)
+	resp, err := c.ClientWithResponses.Verb11WithResponse(c.Context, opt)
 	if err != nil {
 		return nil, errors.Join(errors.New("Failed to request Trip"), err)
 	}

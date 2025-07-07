@@ -1,12 +1,47 @@
 package gohafas
 
 import (
+	"context"
+	"log/slog"
+	"net/http"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/xNaCly/go-hafas/language"
 	"github.com/xNaCly/go-hafas/vbbraw"
 )
+
+func TestReadme(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	httpClient := http.Client{
+		Timeout: 2 * time.Second,
+	}
+
+	client, err := NewClient(
+		getStringFromEnvOrFailTest(t, BASEURL_ENV),
+		getStringFromEnvOrFailTest(t, AUTH_ENV),
+		WithLanguage(language.ES),
+		WithContext(ctx),
+		WithHttpClient(&httpClient),
+	)
+
+	if err != nil {
+		slog.Error("hafas", "msg", "failed to create hafas client", "err", err)
+	}
+
+	err = client.Init()
+	if err != nil {
+		slog.Error("hafas", "msg", "failed to init hafas client", "err", err)
+	}
+
+	err = client.Ping()
+	if err != nil {
+		slog.Error("hafas", "msg", "failed to ping hafas remote", "err", err)
+	}
+}
 
 func DerefIfNotNull[T any](t *T) T {
 	if t != nil {
