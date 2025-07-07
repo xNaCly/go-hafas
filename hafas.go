@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/xNaCly/go-hafas/vbbraw"
+	"github.com/xnacly/go-hafas/vbbraw"
 )
 
 func debugStruct[S any](s S) {

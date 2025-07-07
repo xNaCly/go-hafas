@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/xNaCly/go-hafas/language"
-	"github.com/xNaCly/go-hafas/vbbraw"
+	"github.com/xnacly/go-hafas/language"
+	"github.com/xnacly/go-hafas/vbbraw"
 )
 
 func TestReadme(t *testing.T) {

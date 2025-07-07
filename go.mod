@@ -1,4 +1,4 @@
-module github.com/xNaCly/go-hafas
+module github.com/xnacly/go-hafas
 
 go 1.24.4
 

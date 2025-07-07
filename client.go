@@ -7,8 +7,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/xNaCly/go-hafas/language"
-	"github.com/xNaCly/go-hafas/vbbraw"
+	"github.com/xnacly/go-hafas/language"
+	"github.com/xnacly/go-hafas/vbbraw"
 )
 
 // Client holds all necessary state and configuration for making hafas api interaction work
