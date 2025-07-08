@@ -179,3 +179,28 @@ func (c *Client) TripSearch(time Time, opt *vbbraw.Verb11Params) ([]vbbraw.TripT
 
 	return *resp.JSON200.Trip, nil
 }
+
+// JourneyDetail delivers information about the complete route of a vehicle
+//
+// See hafas api docs 2.31
+func (c *Client) JourneyDetail(id string, opt *vbbraw.Verb6Params) (vbbraw.JourneyDetail, error) {
+	if opt == nil {
+		opt = &vbbraw.Verb6Params{}
+	}
+
+	opt.Id = id
+
+	var empty vbbraw.JourneyDetail
+
+	resp, err := c.ClientWithResponses.Verb6WithResponse(c.Context, opt)
+	if err != nil {
+		return empty, errors.Join(errors.New("Failed to request JourneyDetail"), err)
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		e := errorFromBytes(resp.Body)
+		return empty, errors.Join(errors.New("Non 200 status code while requesting JourneyDetail"), e)
+	}
+
+	return *resp.JSON200, nil
+}

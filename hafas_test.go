@@ -153,7 +153,29 @@ func TestTrip(t *testing.T) {
 		OriginId: &start.Id,
 		DestId:   &end.Id,
 	}
-	departure, err := c.TripSearch(TimeFrom(time.Now()), params)
+	trip, err := c.TripSearch(TimeFrom(time.Now()), params)
 	assert.NoError(t, err)
-	assert.NotEmpty(t, departure)
+	assert.NotEmpty(t, trip)
+}
+
+func TestJourneyDetail(t *testing.T) {
+	c, err := setup(t)
+	assert.NoError(t, err)
+	assert.NoError(t, c.Init())
+
+	locations, err := c.LocationsByName("S Köpenick", nil)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, locations)
+
+	loc := locations[0]
+	assert.NoError(t, loc.Unwrap())
+	locAsStop, err := loc.AsStopLocation()
+
+	arrivals, err := c.Arrivals(*&locAsStop.Id, TimeFrom(time.Now()), nil)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, arrivals)
+
+	journey, err := c.JourneyDetail(arrivals[0].JourneyDetailRef.Ref, nil)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, journey)
 }
