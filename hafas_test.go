@@ -43,12 +43,11 @@ func TestReadme(t *testing.T) {
 	}
 }
 
-func DerefIfNotNull[T any](t *T) T {
+func derefIfNotNull[T any](t *T) T {
 	if t != nil {
 		return *t
 	}
-	var e T
-	return e
+	panic("Cant deref, argument was nil")
 }
 
 func TestLocationsByName(t *testing.T) {
@@ -81,7 +80,7 @@ func TestLocationsByCoordinates(t *testing.T) {
 	coord, err := loc.AsStopLocation()
 	assert.NoError(t, err)
 
-	stopLocation, err := c.LocationsByCoordinate(*coord.Lat, *coord.Lon, nil)
+	stopLocation, err := c.LocationsByCoordinate(derefIfNotNull(coord.Lat), derefIfNotNull(coord.Lon), nil)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, stopLocation)
 }
@@ -99,7 +98,7 @@ func TestArrivals(t *testing.T) {
 	assert.NoError(t, loc.Unwrap())
 	locAsStop, err := loc.AsStopLocation()
 
-	arrivals, err := c.Arrivals(*&locAsStop.Id, TimeFrom(time.Now()), nil)
+	arrivals, err := c.Arrivals(locAsStop.Id, TimeFrom(time.Now()), nil)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, arrivals)
 }
@@ -116,7 +115,7 @@ func TestDepartures(t *testing.T) {
 	loc := locations[0]
 	assert.NoError(t, loc.Unwrap())
 	locAsStop, err := loc.AsStopLocation()
-	departure, err := c.Departures(*&locAsStop.Id, TimeFrom(time.Now()), nil)
+	departure, err := c.Departures(locAsStop.Id, TimeFrom(time.Now()), nil)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, departure)
 }
@@ -171,11 +170,33 @@ func TestJourneyDetail(t *testing.T) {
 	assert.NoError(t, loc.Unwrap())
 	locAsStop, err := loc.AsStopLocation()
 
-	arrivals, err := c.Arrivals(*&locAsStop.Id, TimeFrom(time.Now()), nil)
+	arrivals, err := c.Arrivals(locAsStop.Id, TimeFrom(time.Now()), nil)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, arrivals)
 
 	journey, err := c.JourneyDetail(arrivals[0].JourneyDetailRef.Ref, nil)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, journey)
+}
+
+func TestJourneyPos(t *testing.T) {
+	c, err := setup(t)
+	assert.NoError(t, err)
+	assert.NoError(t, c.Init())
+
+	locations, err := c.LocationsByName("U Adenauerplatz", nil)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, locations)
+
+	loc := locations[0]
+	assert.NoError(t, loc.Unwrap())
+	locAsStop, err := loc.AsStopLocation()
+
+	lat, lon := derefIfNotNull(locAsStop.Lat), derefIfNotNull(locAsStop.Lon)
+	// ±0.01 is equal to around 1.1km, so we define a bounding box  of around 2km*2km around the
+	// stop we looked up above
+	offset := float32(0.01)
+	journeys, err := c.JourneyPos(lat-offset, lon-offset, lat+offset, lon+offset, TimeFrom(time.Now()), nil)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, journeys)
 }

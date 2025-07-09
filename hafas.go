@@ -19,7 +19,12 @@ func debugStruct[S any](s S) {
 	fmt.Println(string(out))
 }
 
-// LocationsByName searches locations matching `nameOrAdress` by calling the location.name hafas endpoint
+// LocationsByName searches locations matching `nameOrAdress` by calling the
+// location.name hafas endpoint
+//
+// WARNING: vbbraw.LocationList_StopLocationOrCoordLocation_Item is a tagged
+// union and requires a call to .Unwrap() before .AsStopLocation() or
+// .AsCoordLocation() deserialize to the correct values
 //
 // See hafas api docs 2.3
 func (c *Client) LocationsByName(nameOrAdress string, opt *vbbraw.Verb8Params) ([]vbbraw.LocationList_StopLocationOrCoordLocation_Item, error) {
@@ -203,4 +208,51 @@ func (c *Client) JourneyDetail(id string, opt *vbbraw.Verb6Params) (vbbraw.Journ
 	}
 
 	return *resp.JSON200, nil
+}
+
+func refify[T any](t T) *T {
+	return &t
+}
+
+// JourneyPos delivers information about journeys inside of a region defined by
+// a bounding box
+//
+// Bounding box is defined by the lower left coordinates (LlLat, Llon) and the
+// upper right coordinates (UrLat, UrLon).
+//
+// dateAndTime should always be set to speed the requests up, see hafas docs:
+//
+//	> If not provided, all matching trains of
+//	> the current timetable are taken into
+//	> account. This will slow down the
+//	> operation considerably.
+//
+// See hafas api docs 2.33
+func (c *Client) JourneyPos(LlLat, LlLon, UrLat, UrLon float32, hafasTime Time, opt *vbbraw.Verb7Params) ([]vbbraw.JourneyType, error) {
+	if opt == nil {
+		opt = &vbbraw.Verb7Params{
+			PositionMode: refify(vbbraw.CALCREPORT),
+		}
+	}
+
+	opt.LlLat = LlLat
+	opt.LlLon = LlLon
+	opt.UrLat = UrLat
+	opt.UrLon = UrLon
+
+	d, t := hafasTime.ToHafasDateAndTime()
+	opt.Date = &d
+	opt.Time = &t
+
+	resp, err := c.ClientWithResponses.Verb7WithResponse(c.Context, opt)
+	if err != nil {
+		return nil, errors.Join(errors.New("Failed to request JourneyPos"), err)
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		e := errorFromBytes(resp.Body)
+		return nil, errors.Join(errors.New("Non 200 status code while requesting JourneyPos"), e)
+	}
+
+	return *resp.JSON200.Journey, nil
 }
