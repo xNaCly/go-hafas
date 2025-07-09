@@ -8,12 +8,14 @@
 
 - Abstractions over:
   - Authentication
-  - HTTP Request managment
+  - HTTP request managment
   - Response deserialization and unwrapping
 - Typesafe hafas API interaction
-- Exhaustive testing swuite
-- Language handling out of the box
+- Exhaustive testing suite
+- Built-in Language support
 - Configurable abstraction via functional modifiers
+- Full access to underlying generated HAFAS types and endpoints for advanced
+  use and users (via `Client.ClientWithResponses`)
 
 ## Install
 
@@ -75,7 +77,7 @@ func main() {
 
 #### By Name
 
-#### By Coordiates
+#### By Coordinates
 
 ### Arrivals
 
@@ -84,6 +86,10 @@ func main() {
 ### DataInfo
 
 ### TripSearch
+
+### JourneyDetail
+
+### JourneyPos
 
 ## Testing
 
