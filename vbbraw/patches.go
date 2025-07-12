@@ -2,6 +2,8 @@ package vbbraw
 
 import (
 	"encoding/json"
+	"slices"
+	"strings"
 )
 
 // Unwrap extracts the value of the first element in a map
@@ -24,4 +26,34 @@ func (l *LocationList_StopLocationOrCoordLocation_Item) Unwrap() error {
 	}
 	l.union = unwrapped
 	return nil
+}
+
+func (l TripType) AsGeoJSON() string {
+	b := strings.Builder{}
+	coords := make([][2]float64, 0, 16)
+	for _, leg := range *l.LegList.Leg {
+		if leg.GisRoute == nil || leg.GisRoute.Polyline == nil || leg.GisRoute.Polyline.Crd == nil {
+			continue
+		}
+		for chunk := range slices.Chunk(*leg.GisRoute.Polyline.Crd, 2) {
+			if len(chunk) != 2 {
+				continue
+			}
+			coords = append(coords, [2]float64{chunk[0], chunk[1]})
+		}
+	}
+
+	geo := map[string]any{
+		"type": "Feature",
+		"geometry": map[string]any{
+			"type":        "LineString",
+			"coordinates": coords,
+		},
+	}
+
+	enc := json.NewEncoder(&b)
+	enc.SetIndent("", "  ")
+	_ = enc.Encode(geo)
+
+	return b.String()
 }

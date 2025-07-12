@@ -202,6 +202,10 @@ func TestJourneyPos(t *testing.T) {
 }
 
 func TestHimSearch(t *testing.T) {
+	// TODO: i have no idea if this works, when testing there were no him
+	// messages available, maybe the test env has none?
+	t.SkipNow()
+
 	c, err := setup(t)
 	assert.NoError(t, err)
 	assert.NoError(t, c.Init())
@@ -216,8 +220,40 @@ func TestHimSearch(t *testing.T) {
 	}
 	hims, err := c.HimSearch(param)
 	assert.NoError(t, err)
+	assert.NotEmpty(t, hims)
+}
 
-	// TODO: i have no idea if this works, when testing there were no him
-	// messages available, maybe the test env has none?
-	debugStruct(hims)
+func TestGisRoute(t *testing.T) {
+	// This is skipped because BAIM is not enabled
+	t.SkipNow()
+
+	c, err := setup(t)
+	assert.NoError(t, err)
+	assert.NoError(t, c.Init())
+
+	locations, err := c.LocationsByName("U Alexanderplatz", nil)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, locations)
+	assert.NoError(t, locations[0].Unwrap())
+	start, err := locations[0].AsStopLocation()
+	assert.NoError(t, err)
+
+	locations, err = c.LocationsByName("U Jannowitzbrücke", nil)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, locations)
+	assert.NoError(t, locations[0].Unwrap())
+	end, err := locations[0].AsStopLocation()
+	assert.NoError(t, err)
+
+	params := &vbbraw.Verb11Params{
+		OriginId: &start.Id,
+		DestId:   &end.Id,
+	}
+	trips, err := c.TripSearch(TimeFrom(time.Now()), params)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, trips)
+
+	trip, err := c.GisRoute(*trips[0].CtxRecon, nil)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, trip)
 }

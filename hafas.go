@@ -313,3 +313,36 @@ func (c *Client) HimSearch(opt *vbbraw.Verb5Params) ([]vbbraw.Message, error) {
 
 	return *resp.JSON200.Message, nil
 }
+
+func (c *Client) GisRoute(ctx string, opt *vbbraw.Verb4Params) (vbbraw.TripType, error) {
+	if opt == nil {
+		opt = &vbbraw.Verb4Params{}
+	}
+
+	opt.Ctx = ctx
+
+	var empty vbbraw.TripType
+
+	resp, err := c.ClientWithResponses.Verb4WithResponse(c.Context, opt)
+	if err != nil {
+		return empty, errors.Join(errors.New("Failed to request GisRoute"), err)
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		e := errorFromBytes(resp.Body)
+		return empty, errors.Join(errors.New("Non 200 status code while requesting GisRoute"), e)
+	}
+
+	// 2.24.2 Example:
+	// Response will follow the structure of trip service but containing one trip only if any.
+
+	if resp.JSON200 == nil || resp.JSON200.Trip == nil {
+		return empty, nil
+	}
+
+	if len(*resp.JSON200.Trip) == 0 {
+		return empty, nil
+	}
+
+	return (*resp.JSON200.Trip)[0], nil
+}
