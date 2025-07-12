@@ -42,6 +42,10 @@ func (c *Client) LocationsByName(nameOrAdress string, opt *vbbraw.Verb8Params) (
 		return nil, errors.Join(errors.New("Non 200 status code while requesting LocationsByName"), e)
 	}
 
+	if resp.JSON200 == nil || resp.JSON200.StopLocationOrCoordLocation == nil {
+		return []vbbraw.LocationList_StopLocationOrCoordLocation_Item{}, nil
+	}
+
 	return *resp.JSON200.StopLocationOrCoordLocation, nil
 }
 
@@ -62,6 +66,10 @@ func (c *Client) LocationsByCoordinate(originCoordLat, originCoordLong float32, 
 	if resp.StatusCode() != http.StatusOK {
 		e := errorFromBytes(resp.Body)
 		return nil, errors.Join(errors.New("Non 200 status code while requesting LocationsByCoordinate"), e)
+	}
+
+	if resp.JSON200 == nil || resp.JSON200.StopLocationOrCoordLocation == nil {
+		return []vbbraw.StopLocation{}, nil
 	}
 
 	// we cast all of these to StopLocation, since we know LocationsByCoordinate only returns StopLocation
@@ -110,6 +118,10 @@ func (c *Client) Arrivals(locationId string, date Time, opt *vbbraw.Verb1Params)
 		return nil, errors.Join(errors.New("Non 200 status code while requesting Arrivals"), e)
 	}
 
+	if resp.JSON200 == nil || resp.JSON200.Arrival == nil {
+		return []vbbraw.Arrival{}, nil
+	}
+
 	return *resp.JSON200.Arrival, nil
 }
 
@@ -138,6 +150,10 @@ func (c *Client) Departures(locationId string, date Time, opt *vbbraw.Verb3Param
 		return nil, errors.Join(errors.New("Non 200 status code while requesting Departures"), e)
 	}
 
+	if resp.JSON200 == nil || resp.JSON200.Departure == nil {
+		return []vbbraw.Departure{}, nil
+	}
+
 	return *resp.JSON200.Departure, nil
 }
 
@@ -155,6 +171,10 @@ func (c *Client) DataInfo() (vbbraw.DataInfo, error) {
 	if resp.StatusCode() != http.StatusOK {
 		e := errorFromBytes(resp.Body)
 		return empty, errors.Join(errors.New("Non 200 status code while requesting DataInfo"), e)
+	}
+
+	if resp.JSON200 == nil {
+		return vbbraw.DataInfo{}, nil
 	}
 
 	return *resp.JSON200, nil
@@ -182,6 +202,10 @@ func (c *Client) TripSearch(time Time, opt *vbbraw.Verb11Params) ([]vbbraw.TripT
 		return nil, errors.Join(errors.New("Non 200 status code while requesting Trip"), e)
 	}
 
+	if resp.JSON200 == nil || resp.JSON200.Trip == nil {
+		return []vbbraw.TripType{}, nil
+	}
+
 	return *resp.JSON200.Trip, nil
 }
 
@@ -205,6 +229,10 @@ func (c *Client) JourneyDetail(id string, opt *vbbraw.Verb6Params) (vbbraw.Journ
 	if resp.StatusCode() != http.StatusOK {
 		e := errorFromBytes(resp.Body)
 		return empty, errors.Join(errors.New("Non 200 status code while requesting JourneyDetail"), e)
+	}
+
+	if resp.JSON200 == nil {
+		return vbbraw.JourneyDetail{}, nil
 	}
 
 	return *resp.JSON200, nil
@@ -254,5 +282,34 @@ func (c *Client) JourneyPos(LlLat, LlLon, UrLat, UrLon float32, hafasTime Time, 
 		return nil, errors.Join(errors.New("Non 200 status code while requesting JourneyPos"), e)
 	}
 
+	if resp.JSON200 == nil || resp.JSON200.Journey == nil {
+		return []vbbraw.JourneyType{}, nil
+	}
+
 	return *resp.JSON200.Journey, nil
+}
+
+// HimSearch delivers a list of HIM (HAFAS Information Manager) messages if matched by the given criteria and products, if any.
+//
+// See hafas api docs 2.42
+func (c *Client) HimSearch(opt *vbbraw.Verb5Params) ([]vbbraw.Message, error) {
+	if opt == nil {
+		opt = &vbbraw.Verb5Params{}
+	}
+
+	resp, err := c.ClientWithResponses.Verb5WithResponse(c.Context, opt)
+	if err != nil {
+		return nil, errors.Join(errors.New("Failed to request HimSearch"), err)
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		e := errorFromBytes(resp.Body)
+		return nil, errors.Join(errors.New("Non 200 status code while requesting HimSearch"), e)
+	}
+
+	if resp.JSON200.Message == nil {
+		return []vbbraw.Message{}, nil
+	}
+
+	return *resp.JSON200.Message, nil
 }

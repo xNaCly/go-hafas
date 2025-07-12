@@ -200,3 +200,24 @@ func TestJourneyPos(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, journeys)
 }
+
+func TestHimSearch(t *testing.T) {
+	c, err := setup(t)
+	assert.NoError(t, err)
+	assert.NoError(t, c.Init())
+
+	// start 6 months ago
+	dateB, _ := TimeFrom(time.Now().AddDate(0, -6, 0)).ToHafasDateAndTime()
+	dateE, _ := TimeFrom(time.Now()).ToHafasDateAndTime()
+
+	param := &vbbraw.Verb5Params{
+		DateB: &dateB,
+		DateE: &dateE,
+	}
+	hims, err := c.HimSearch(param)
+	assert.NoError(t, err)
+
+	// TODO: i have no idea if this works, when testing there were no him
+	// messages available, maybe the test env has none?
+	debugStruct(hims)
+}
