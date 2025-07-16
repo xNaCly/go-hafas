@@ -20,7 +20,7 @@
 ## Install
 
 ```shell
-go get github.com/xNaCly/go-hafas
+go get github.com/xnacly/go-hafas
 go mod tidy
 ```
 
