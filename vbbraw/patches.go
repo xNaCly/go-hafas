@@ -28,6 +28,18 @@ func (l *LocationList_StopLocationOrCoordLocation_Item) Unwrap() error {
 	return nil
 }
 
+// Must be called before calling LocationList_StopLocationOrCoordLocation_Item.Unwrap
+func (l *LocationList_StopLocationOrCoordLocation_Item) Type() string {
+	w := map[string]json.RawMessage{}
+	if err := json.Unmarshal(l.union, &w); err != nil {
+		return ""
+	}
+	for k := range w {
+		return k
+	}
+	return ""
+}
+
 func (l TripType) AsGeoJSON() string {
 	b := strings.Builder{}
 	coords := make([][2]float64, 0, 16)
